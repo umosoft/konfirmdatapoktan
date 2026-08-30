@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <base target="_top">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    /* Variabel Tema Terang (Light Mode) */
+    :root[data-theme="light"] {
+      --bg: #F8FAFC; --card: #FFFFFF; --text: #1E293B; --text-muted: #64748B;
+      --border: #E2E8F0; --primary: #0F172A; --accent: #2563EB; 
+      --success: #059669; --success-light: #D1FAE5;
+      --danger: #DC2626; --danger-light: #FEE2E2;
+      --input-bg: #FFFFFF; --input-focus: rgba(37, 99, 235, 0.2);
+      --th-bg: #F8FAFC; --hover-bg: #F1F5F9; --btn-hover: #E2E8F0;
+    }
+    
+    /* Variabel Tema Gelap (Dark Mode) - Terinspirasi Vercel/GitHub */
+    :root[data-theme="dark"] {
+      --bg: #0F172A; --card: #1E293B; --text: #F8FAFC; --text-muted: #94A3B8;
+      --border: #334155; --primary: #F8FAFC; --accent: #3B82F6; 
+      --success: #10B981; --success-light: rgba(16, 185, 129, 0.15);
+      --danger: #EF4444; --danger-light: rgba(239, 68, 68, 0.15);
+      --input-bg: #0F172A; --input-focus: rgba(59, 130, 246, 0.4);
+      --th-bg: #0F172A; --hover-bg: #334155; --btn-hover: #475569;
+    }
+
+    body { 
+      font-family: 'Poppins', sans-serif; 
+      background: var(--bg); 
+      color: var(--text); 
+      padding: 16px; 
+      max-width: 1100px; 
+      margin: auto; 
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    .card { background: var(--card); padding: 24px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); margin-bottom: 20px; transition: background-color 0.3s ease, border-color 0.3s ease; }
+    
+    /* Header Flex Container untuk menampung Judul dan Tombol Tema */
+    .header-container { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+    h2 { margin-top: 0; color: var(--primary); font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    
+    /* Tombol Tema */
+    .theme-toggle { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; padding: 0; }
+    .theme-toggle:hover { background: var(--hover-bg); }
+
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 13px; color: var(--text-muted); }
+    select, input[type="text"] { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 13px; box-sizing: border-box; background: var(--input-bg); color: var(--text); transition: 0.2s; }
+    select:focus, input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--input-focus); }
+    
+    button.btn-action { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 500; color: #fff; transition: 0.2s; font-size: 13px; }
+    .btn-primary { background: var(--accent); width: 100%; }
+    .btn-primary:hover { background: #1D4ED8; }
+    .btn-success { background: var(--success); }
+    .btn-success:hover { background: #047857; filter: brightness(1.1); }
+    button:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+    .tab-btn { background: transparent; color: var(--text-muted); padding: 8px 18px; border-radius: 20px; font-weight: 600; white-space: nowrap; border: 1px solid var(--border); transition: 0.2s; cursor: pointer; }
+    .tab-btn:hover { background: var(--btn-hover); color: var(--text); }
+    .tab-btn.active { background: var(--primary); color: var(--bg); border-color: var(--primary); }
+
+    /* Filter & Pencarian (baru) */
+    .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: flex-end; }
+    .filter-bar .form-group { margin-bottom: 0; flex: 1; min-width: 180px; }
+    .filter-bar .form-group.search { flex: 2; min-width: 220px; }
+    
+    .table-container { max-height: 450px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { border-bottom: 1px solid var(--border); padding: 10px 12px; text-align: left; }
+    th { background: var(--th-bg); font-weight: 600; color: var(--text-muted); position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 0 var(--border); }
+    
+    tr.row-filled { background-color: var(--success-light); }
+    tr:hover:not(.row-filled) { background-color: var(--hover-bg); }
+    tr.row-error { background-color: var(--danger-light) !important; outline: 1px solid var(--danger); }
+    .inp-alasan.field-error { border-color: var(--danger); box-shadow: 0 0 0 3px var(--danger-light); }
+    
+    .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: rgba(37, 99, 235, 0.15); color: var(--accent); display: inline-block; border: 1px solid rgba(37, 99, 235, 0.2); }
+    .user-badge { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; background: transparent; color: var(--text); border: 1px solid var(--border); }
+    
+    #app-dashboard { display: none; }
+    .hidden { display: none; }
+
+    /* KPI "Progres Wilayah Anda" */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+    .kpi-card { text-align: center; padding: 14px; }
+    .kpi-val { font-size: 24px; font-weight: 700; color: var(--accent); }
+    .kpi-val.success { color: var(--success); }
+    .kpi-val.warning { color: var(--danger); }
+    .kpi-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
+    .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+    .progress-track { width: 100%; height: 6px; background: var(--border); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; background: var(--accent); border-radius: 3px; transition: width 0.4s ease; }
+    .progres-charts-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 14px; }
+    .progres-chart-box { flex: 1; min-width: 180px; }
+    .progres-chart-box.wide { flex: 1.4; }
+    .progres-chart-title { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+    .chart-wrap { position: relative; height: 160px; }
+
+    /* Paginasi (baru) */
+    .pagination-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 10px; }
+    .pagination-bar .btn-page { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; font-size: 12px; }
+    .pagination-bar .btn-page:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pagination-info { font-size: 12px; color: var(--text-muted); }
+
+    /* Toast Notification Style */
+    #toast-container { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; max-width: 320px; }
+    .toast { min-width: 250px; padding: 14px 20px; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 500; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); display: flex; align-items: flex-start; gap: 10px; opacity: 0; transform: translateX(100%); animation: slideIn 0.3s forwards, fadeOut 0.3s forwards 4s; }
+    .toast.success { background-color: var(--success); }
+    .toast.error { background-color: #EF4444; }
+
+    @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
+    @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+  </style>
+</head>
+<body>
+
+  <!-- LAYER 1: LOGIN -->
+  <div class="card" id="app-login">
+    <div class="header-container">
+      <div>
+        <h2><i class="fas fa-clipboard-check" style="color: var(--accent); margin-right: 8px;"></i> Akses Input Konfirmasi Poktan</h2>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Ubah Tema">
+        <i class="fas fa-moon" id="theme-icon"></i>
+      </button>
+    </div>
+    
+    <div class="form-group">
+      <label>1. Pilih Kabupaten</label>
+      <select id="sel-kabupaten" onchange="onKabupatenSelected()">
+        <option value="">-- Memuat Kabupaten --</option>
+      </select>
+    </div>
+
+    <div class="form-group hidden" id="group-tipe">
+      <label>2. Pilih Pengisi Feedback</label>
+      <select id="sel-tipe" onchange="onTipePengisiChange()">
+        <option value="">-- Pilih Pengisi --</option>
+        <option value="PKB">PKB / PLKB</option>
+        <option value="DINAS">Dinas / OPD KB Kabupaten</option>
+      </select>
+    </div>
+
+    <div id="form-pkb" class="hidden">
+      <div class="form-group">
+        <label>Nama PKB / PLKB</label>
+        <select id="sel-nama"><option value="">-- Pilih Nama --</option></select>
+      </div>
+      <div class="form-group">
+        <label>NIP Validasi</label>
+        <input type="text" id="inp-nip-pkb" placeholder="Masukkan NIP Anda">
+      </div>
+    </div>
+
+    <div id="form-dinas" class="hidden">
+      <div class="form-group">
+        <label>Nama Lengkap Pejabat/Petugas</label>
+        <input type="text" id="inp-dinas-nama" placeholder="Contoh: Nama Lengkap & Gelar">
+      </div>
+      <div class="form-group">
+        <label>NIP</label>
+        <input type="text" id="inp-dinas-nip" placeholder="NIP petugas">
+      </div>
+      <div class="form-group">
+        <label>Jabatan</label>
+        <input type="text" id="inp-dinas-jabatan" placeholder="Contoh: Kabid Dalduk">
+      </div>
+      <div class="form-group">
+        <label>Nomor WhatsApp</label>
+        <input type="text" id="inp-dinas-wa" placeholder="Contoh: 081234567890">
+      </div>
+      <div class="form-group">
+        <label>Passcode Kabupaten</label>
+        <input type="password" id="inp-dinas-passcode" placeholder="Passcode khusus kabupaten ini">
+      </div>
+    </div>
+
+    <button class="btn-action btn-primary hidden" id="btn-login" onclick="prosesLogin()" style="margin-top: 10px;">
+      Masuk ke Dashboard
+    </button>
+    <p id="msg-login" style="text-align: center; font-size: 12px; color: #EF4444; margin-top: 10px; font-weight: 500;"></p>
+  </div>
+
+  <!-- LAYER 2: DASHBOARD -->
+  <div id="app-dashboard" class="card">
+    <div class="header-container" style="margin-bottom: 20px;">
+      <div>
+        <h2>Input Konfirmasi Poktan</h2>
+        <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0;">Tinjau dan tetapkan rencana tindak lanjut kelompok.</p>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <span id="user-info" class="user-badge"></span>
+        <a href="<?= scriptUrl ?>?page=dashboard" target="_top" class="btn-action" style="background: var(--card); border: 1px solid var(--border); color: var(--text); text-decoration: none; padding: 6px 12px; border-radius: 6px; display: flex; align-items: center; gap: 5px;">
+          <i class="fas fa-chart-pie"></i> Dasbor Publik
+        </a>
+
+        <button class="theme-toggle" onclick="toggleTheme()" title="Ubah Tema">
+          <i class="fas fa-moon" id="theme-icon-dash"></i>
+        </button>
+        
+      </div>
+    </div>
+
+    <!-- KPI "Progres Wilayah Anda" (lintas 5 jenis poktan, dimuat sekali saat login) -->
+    <div class="card kpi-grid" id="kpi-progres-wilayah" style="margin-bottom: 20px;">
+      <div class="kpi-card">
+        <div class="kpi-val" id="kpi-w-target">-</div>
+        <div class="kpi-label">Total Poktan di Wilayah Anda</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val success" id="kpi-w-capaian">-</div>
+        <div class="kpi-label">Sudah Dikonfirmasi</div>
+        <div class="kpi-sub" id="kpi-w-capaian-detail"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val" id="kpi-w-persen" style="color: var(--text);">-</div>
+        <div class="kpi-label">Progres Penyelesaian</div>
+        <div class="progress-track"><div class="progress-fill" id="kpi-w-progress-fill"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val warning" id="kpi-w-beda-rekom">-</div>
+        <div class="kpi-label">Beda dari Rekomendasi Sistem</div>
+      </div>
+      <div class="progres-charts-row" style="grid-column: 1 / -1;">
+        <div class="progres-chart-box">
+          <div class="progres-chart-title">Komposisi Keputusan</div>
+          <div class="chart-wrap"><canvas id="chart-w-komposisi"></canvas></div>
+        </div>
+        <div class="progres-chart-box wide">
+          <div class="progres-chart-title">Progres per Sektor</div>
+          <div class="chart-wrap"><canvas id="chart-w-sektor"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs" id="tab-container">
+      <button class="tab-btn active" onclick="muatDataTab('BKB', this)">BKB</button>
+      <button class="tab-btn" onclick="muatDataTab('BKR', this)">BKR</button>
+      <button class="tab-btn" onclick="muatDataTab('BKL', this)">BKL</button>
+      <button class="tab-btn" onclick="muatDataTab('UPPKA', this)">UPPKA</button>
+      <button class="tab-btn" onclick="muatDataTab('PIKR', this)">PIK-R</button>
+    </div>
+
+    <!-- Filter Kecamatan + Pencarian (baru, terutama membantu Dinas OPD dengan data 1 kabupaten penuh) -->
+    <div class="filter-bar">
+      <div class="form-group">
+        <label>Filter Kecamatan</label>
+        <select id="flt-kecamatan" onchange="applyFilterAndRender()">
+          <option value="SEMUA">Semua Kecamatan</option>
+        </select>
+      </div>
+      <div class="form-group search">
+        <label>Cari Nama Poktan / Desa</label>
+        <input type="text" id="flt-cari" oninput="applyFilterAndRender()" placeholder="Ketik untuk mencari...">
+      </div>
+    </div>
+
+    <div id="loading-indicator" style="display: none; color: var(--accent); margin-bottom: 12px; font-size: 12px;">
+      <i class="fas fa-spinner fa-spin"></i> Menyinkronkan data kelompok...
+    </div>
+
+    <div class="table-container">
+      <table id="tbl-poktan">
+        <thead>
+          <tr>
+            <th>ID Poktan</th>
+            <th>Nama Poktan</th>
+            <th>Desa</th>
+            <th>Rekomendasi Sistem</th>
+            <th style="min-width: 140px;">Rencana Tindak Lanjut</th>
+            <th style="min-width: 180px;">Alasan / Justifikasi <span style="color:var(--danger);">*</span></th>
+          </tr>
+        </thead>
+        <tbody id="tbl-body">
+          <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Memuat tabel...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination-bar" id="pagination-bar" style="display: none;">
+      <span class="pagination-info" id="pagination-info"></span>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <button class="btn-page" id="btn-prev-page" onclick="gotoPage(currentPage - 1)"><i class="fas fa-chevron-left"></i> Sebelumnya</button>
+        <span class="pagination-info" id="pagination-page-label"></span>
+        <button class="btn-page" id="btn-next-page" onclick="gotoPage(currentPage + 1)">Berikutnya <i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+    
+    <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+      <button class="btn-action btn-success" id="btn-simpan" onclick="simpanPerubahan()" style="display: none;">
+        <i class="fas fa-save"></i> Simpan Perubahan
+      </button>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script>
+    // --- MANAJEMEN TEMA (DARK/LIGHT) ---
+    function initTheme() {
+      const savedTheme = localStorage.getItem('poktanTheme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeIcon(savedTheme);
+    }
+    
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('poktanTheme', next);
+      updateThemeIcon(next);
+
+      // Grafik membaca warna dari CSS variable saat digambar, jadi perlu digambar ulang
+      // supaya warnanya ikut berubah instan saat ganti tema. Pakai data yang sudah
+      // di-cache (lastProgresRes) - tidak perlu fetch ulang ke server.
+      if (lastProgresRes) renderProgresWilayahCharts(lastProgresRes);
+    }
+
+    function updateThemeIcon(theme) {
+      const isDark = theme === 'dark';
+      const iconClass = isDark ? 'fas fa-sun' : 'fas fa-moon';
+      if(document.getElementById('theme-icon')) document.getElementById('theme-icon').className = iconClass;
+      if(document.getElementById('theme-icon-dash')) document.getElementById('theme-icon-dash').className = iconClass;
+    }
+
+    // Panggil saat halaman dimuat
+    initTheme();
+
+    // --- HELPER: escape HTML supaya data dari sheet (nama poktan, desa, alasan, dst)
+    // tidak bisa "lepas" dari tag dan menyisipkan HTML/script (anti-XSS). ---
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return String(str).replace(/[&<>"']/g, ch => map[ch]);
+    }
+
+    // --- HELPER: ubah error teknis mentah menjadi pesan yang rapi.
+    // Pesan yang sudah ditulis manual di backend (Code.gs) dalam Bahasa Indonesia
+    // akan tetap ditampilkan apa adanya; hanya error teknis (stack trace dsb) yang diganti. ---
+    function friendlyError(err) {
+      const raw = (err && err.message) ? err.message : String(err);
+      console.error('Detail error:', err);
+
+      if (isTransientError(err)) {
+        return 'Sistem sedang banyak diakses bersamaan. Coba lagi dalam beberapa detik.';
+      }
+
+      const teknis = /(TypeError|ReferenceError|Cannot read|undefined is not|Exception:|Script function not found|is not a function|null is not an object)/i;
+      if (teknis.test(raw)) {
+        return 'Terjadi kendala teknis saat memproses permintaan. Coba lagi beberapa saat, atau hubungi admin jika masalah berlanjut.';
+      }
+      return raw;
+    }
+
+    // Error "sementara" akibat sistem sedang sibuk (lock timeout milik kita sendiri,
+    // atau kuota/batas eksekusi bersamaan Apps Script) - beda dari error karena data
+    // salah atau bug, ini murni soal waktu. Dipakai juga oleh simpanPerubahan() untuk
+    // memutuskan apakah layak dicoba ulang otomatis.
+    function isTransientError(err) {
+      const raw = (err && err.message) ? err.message : String(err);
+      return /(sedang memproses simpanan lain|too many|concurrent|exceeded maximum execution|rate limit|quota|service invoked too many times|internal error|server error)/i.test(raw);
+    }
+
+    // --- LOGIKA APLIKASI ---
+    let activeAuth = null;
+    let currentTab = 'BKB';
+    let currentMeta = null;
+
+    // currentData: seluruh baris tab yang sedang aktif, sudah ditandai _dirty per baris
+    // saat user mengubah RTL/alasan. Ini menggantikan pendekatan lama yang mengirim ULANG
+    // semua baris saat simpan (yang berisiko menimpa input orang lain yang belum sempat
+    // dimuat ulang di layar kita - lihat catatan di simpanPerubahan()).
+    let currentData = [];
+    let filteredData = [];
+    let currentPage = 1;
+    const PAGE_SIZE = 50;
+
+    // requestToken: mencegah race condition saat user klik ganti tab dengan cepat.
+    // Kalau ada respons dari tab lama yang datang terlambat (setelah tab baru diminta),
+    // respons itu akan diabaikan karena token-nya sudah tidak cocok lagi.
+    let requestToken = 0;
+
+    google.script.run.withSuccessHandler(res => {
+      let opt = '<option value="">-- Pilih Kabupaten --</option>';
+      res.forEach(k => opt += `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`);
+      document.getElementById('sel-kabupaten').innerHTML = opt;
+    }).withFailureHandler(err => {
+      document.getElementById('sel-kabupaten').innerHTML = '<option value="">-- Gagal memuat --</option>';
+      document.getElementById('msg-login').innerText = friendlyError(err);
+    }).getDaftarKabupaten();
+
+    function onKabupatenSelected() {
+      let kab = document.getElementById('sel-kabupaten').value;
+      let groupTipe = document.getElementById('group-tipe');
+      if (kab) {
+        groupTipe.classList.remove('hidden');
+      } else {
+        groupTipe.classList.add('hidden');
+        document.getElementById('form-pkb').classList.add('hidden');
+        document.getElementById('form-dinas').classList.add('hidden');
+        document.getElementById('btn-login').classList.add('hidden');
+      }
+    }
+
+    function onTipePengisiChange() {
+      let tipe = document.getElementById('sel-tipe').value;
+      let kab = document.getElementById('sel-kabupaten').value;
+      
+      document.getElementById('form-pkb').classList.add('hidden');
+      document.getElementById('form-dinas').classList.add('hidden');
+      document.getElementById('btn-login').classList.add('hidden');
+
+      if (tipe === 'PKB') {
+        document.getElementById('form-pkb').classList.remove('hidden');
+        document.getElementById('btn-login').classList.remove('hidden');
+        loadNamaPKB(kab);
+      } else if (tipe === 'DINAS') {
+        document.getElementById('form-dinas').classList.remove('hidden');
+        document.getElementById('btn-login').classList.remove('hidden');
+      }
+    }
+
+    function loadNamaPKB(kab) {
+      document.getElementById('sel-nama').innerHTML = '<option>Memuat nama...</option>';
+      google.script.run.withSuccessHandler(res => {
+        let opt = '<option value="">-- Pilih Nama PKB --</option>';
+        res.forEach(n => opt += `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`);
+        document.getElementById('sel-nama').innerHTML = opt;
+      }).withFailureHandler(err => {
+        document.getElementById('sel-nama').innerHTML = '<option value="">-- Gagal memuat nama --</option>';
+        document.getElementById('msg-login').innerText = friendlyError(err);
+      }).getDaftarNama(kab);
+    }
+
+    function prosesLogin() {
+      let tipe = document.getElementById('sel-tipe').value;
+      let msg = document.getElementById('msg-login');
+      let btn = document.getElementById('btn-login');
+      msg.innerText = "";
+      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memverifikasi...';
+
+      if (tipe === 'PKB') {
+        let nama = document.getElementById('sel-nama').value;
+        let nip = document.getElementById('inp-nip-pkb').value;
+        if (!nama || !nip) {
+          msg.innerText = "Lengkapi Nama dan NIP PKB.";
+          btn.disabled = false; btn.innerHTML = 'Masuk ke Dashboard';
+          return;
+        }
+        google.script.run.withSuccessHandler(onLoginSuccess).withFailureHandler(err => {
+          btn.disabled = false; btn.innerHTML = 'Masuk ke Dashboard';
+          msg.innerText = friendlyError(err);
+        }).loginDanGetWilayah(nama, nip);
+
+      } else if (tipe === 'DINAS') {
+        let dataDinas = {
+          nama: document.getElementById('inp-dinas-nama').value,
+          nip: document.getElementById('inp-dinas-nip').value,
+          jabatan: document.getElementById('inp-dinas-jabatan').value,
+          wa: document.getElementById('inp-dinas-wa').value
+        };
+        let passcodeDinas = document.getElementById('inp-dinas-passcode').value;
+        if (!dataDinas.nama || !dataDinas.nip || !passcodeDinas) {
+          msg.innerText = "Lengkapi Nama, NIP, dan Passcode Kabupaten.";
+          btn.disabled = false; btn.innerHTML = 'Masuk ke Dashboard';
+          return;
+        }
+        google.script.run.withSuccessHandler(onLoginSuccess).withFailureHandler(err => {
+          btn.disabled = false; btn.innerHTML = 'Masuk ke Dashboard';
+          msg.innerText = friendlyError(err);
+        }).loginDinasOPD(document.getElementById('sel-kabupaten').value, dataDinas, passcodeDinas);
+      }
+    }
+
+    function onLoginSuccess(res) {
+      activeAuth = res;
+      document.getElementById('app-login').style.display = 'none';
+      document.getElementById('app-dashboard').style.display = 'block';
+      document.getElementById('user-info').innerHTML = res.tipe === 'DINAS'
+        ? `<i class="fas fa-building"></i> Dinas OPD KB (${escapeHtml(res.kabupaten)})`
+        : `<i class="fas fa-user-tie"></i> ${escapeHtml(res.nama)} (PKB)`;
+      muatProgresWilayah();
+      muatDataTab('BKB', document.querySelector('.tab-btn'));
+    }
+
+    // KPI "Progres Wilayah Anda" - lintas 5 jenis poktan, terpisah dari tab yang sedang
+    // dibuka. Dipanggil sekali saat login, dan disegarkan lagi setiap kali simpan berhasil
+    // (lihat simpanPerubahan()) supaya angkanya tidak basi.
+    // --- UTIL GRAFIK (warna dibaca dari CSS variable saat digambar, supaya otomatis
+    // ikut berubah saat ganti tema - lihat toggleTheme di atas) ---
+    let chartInstances = {};
+    let lastProgresRes = null; // cache hasil terakhir supaya bisa digambar ulang tanpa fetch ulang ke server
+
+    function cssVar(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function renderOrUpdateChart(canvasId, config) {
+      const el = document.getElementById(canvasId);
+      if (!el) return;
+      if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+      chartInstances[canvasId] = new Chart(el, config);
+    }
+
+    function renderProgresWilayahCharts(res) {
+      const belumInput = res.totalTarget - res.totalSelesai;
+      renderOrUpdateChart('chart-w-komposisi', {
+        type: 'doughnut',
+        data: {
+          labels: ['Dipertahankan', 'Dinonaktifkan', 'Belum Input'],
+          datasets: [{
+            data: [res.totalDipertahankan, res.totalDinonaktifkan, belumInput],
+            backgroundColor: [cssVar('--success'), cssVar('--danger'), cssVar('--border')],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '62%',
+          plugins: { legend: { position: 'bottom', labels: { color: cssVar('--text'), font: { family: 'Poppins', size: 10 }, boxWidth: 9, padding: 8 } } }
+        }
+      });
+
+      renderOrUpdateChart('chart-w-sektor', {
+        type: 'bar',
+        data: {
+          labels: res.perSektor.map(s => s.jenisPoktan),
+          datasets: [{
+            data: res.perSektor.map(s => s.target ? Math.round((s.selesai / s.target) * 100) : 0),
+            backgroundColor: cssVar('--accent'),
+            borderRadius: 4,
+            maxBarThickness: 16
+          }]
+        },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { min: 0, max: 100, ticks: { color: cssVar('--text-muted'), font: { size: 10 }, callback: v => v + '%' }, grid: { color: cssVar('--border') } },
+            y: { ticks: { color: cssVar('--text'), font: { family: 'Poppins', size: 11 } }, grid: { display: false } }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ctx.parsed.x + '% selesai' } }
+          }
+        }
+      });
+    }
+
+    function muatProgresWilayah() {
+      google.script.run.withSuccessHandler(res => {
+        document.getElementById('kpi-w-target').innerText = res.totalTarget;
+        document.getElementById('kpi-w-capaian').innerText = res.totalSelesai;
+        document.getElementById('kpi-w-capaian-detail').innerText =
+          `${res.totalDipertahankan} Dipertahankan · ${res.totalDinonaktifkan} Dinonaktifkan`;
+        const pct = res.totalTarget ? Math.round((res.totalSelesai / res.totalTarget) * 100) : 0;
+        document.getElementById('kpi-w-persen').innerText = pct + '%';
+        document.getElementById('kpi-w-progress-fill').style.width = pct + '%';
+        document.getElementById('kpi-w-beda-rekom').innerText = res.totalBedaRekom;
+
+        lastProgresRes = res;
+        renderProgresWilayahCharts(res);
+      }).withFailureHandler(err => {
+        console.error('Gagal memuat progres wilayah:', err);
+        document.getElementById('kpi-w-target').innerText = '?';
+      }).getProgresWilayahSaya(activeAuth);
+    }
+
+    function muatDataTab(jenis, btnElement) {
+      currentTab = jenis;
+      const myToken = ++requestToken; // tandai permintaan ini sebagai yang terbaru
+
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      if(btnElement) btnElement.classList.add('active');
+      
+      document.getElementById('loading-indicator').style.display = 'block';
+      document.getElementById('tbl-body').innerHTML = '';
+      document.getElementById('btn-simpan').style.display = 'none';
+      document.getElementById('pagination-bar').style.display = 'none';
+      document.getElementById('flt-cari').value = '';
+
+      google.script.run.withSuccessHandler(res => {
+        if (myToken !== requestToken) return; // ada tab lain yang sudah diminta setelah ini, abaikan respons basi ini
+        renderTabel(res);
+      }).withFailureHandler(err => {
+        if (myToken !== requestToken) return;
+        showToast(friendlyError(err), 'error');
+        document.getElementById('loading-indicator').style.display = 'none';
+      }).getPoktanData(activeAuth, jenis);
+    }
+
+    function renderTabel(res) {
+      document.getElementById('loading-indicator').style.display = 'none';
+      currentMeta = { rtl: res.kolomRTL, alasan: res.kolomAlasan };
+      // _dirty menandai baris yang benar-benar diubah user di sesi ini
+      currentData = res.data.map(r => Object.assign({}, r, { _dirty: false }));
+      currentPage = 1;
+      populateFilterKecamatan();
+      applyFilterAndRender();
+    }
+
+    function populateFilterKecamatan() {
+      const sel = document.getElementById('flt-kecamatan');
+      const kecSet = new Set(currentData.map(d => d.kecamatan).filter(Boolean));
+      let opt = '<option value="SEMUA">Semua Kecamatan</option>';
+      Array.from(kecSet).sort().forEach(k => opt += `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`);
+      sel.innerHTML = opt;
+      sel.value = 'SEMUA';
+    }
+
+    // Dipanggil saat filter kecamatan / kotak pencarian berubah
+    function applyFilterAndRender() {
+      const kecVal = document.getElementById('flt-kecamatan').value;
+      const cari = (document.getElementById('flt-cari').value || '').trim().toLowerCase();
+
+      filteredData = currentData.filter(d => {
+        if (kecVal !== 'SEMUA' && d.kecamatan !== kecVal) return false;
+        if (cari) {
+          const hay = (String(d.namaPoktan) + ' ' + String(d.desa)).toLowerCase();
+          if (!hay.includes(cari)) return false;
+        }
+        return true;
+      });
+      currentPage = 1;
+      renderPage();
+    }
+
+    function renderPage() {
+      const tbody = document.getElementById('tbl-body');
+      const total = filteredData.length;
+      document.getElementById('btn-simpan').style.display = total > 0 ? 'block' : 'none';
+
+      if (total === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Tidak ada data Poktan untuk wilayah/filter ini.</td></tr>';
+        document.getElementById('pagination-bar').style.display = 'none';
+        return;
+      }
+
+      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      const startIdx = (currentPage - 1) * PAGE_SIZE;
+      const pageItems = filteredData.slice(startIdx, startIdx + PAGE_SIZE);
+
+      let html = '';
+      pageItems.forEach(r => {
+        let isFilled = r.rtl !== '' && r.rtl !== null;
+        let rowClass = isFilled ? 'row-data row-filled' : 'row-data';
+
+        html += `
+          <tr class="${rowClass}" data-rowidx="${r.rowIdx}">
+            <td>${escapeHtml(r.idPoktan)}</td>
+            <td><strong>${escapeHtml(r.namaPoktan)}</strong></td>
+            <td>${escapeHtml(r.desa)}</td>
+            <td><span class="status-badge">${escapeHtml(r.rekomendasi)}</span></td>
+            <td>
+              <select class="inp-rtl" onchange="onRtlChange(this)">
+                <option value="" ${r.rtl===''?'selected':''}>-- Pilih RTL --</option>
+                <option value="Dipertahankan" ${r.rtl==='Dipertahankan'?'selected':''}>Dipertahankan</option>
+                <option value="Dinonaktifkan" ${r.rtl==='Dinonaktifkan'?'selected':''}>Dinonaktifkan</option>
+              </select>
+            </td>
+            <td><input type="text" class="inp-alasan" value="${escapeHtml(r.alasan)}" oninput="onAlasanChange(this)" placeholder="Wajib diisi..."></td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+
+      // Info paginasi
+      document.getElementById('pagination-bar').style.display = totalPages > 1 ? 'flex' : 'none';
+      document.getElementById('pagination-info').innerText = `Menampilkan ${startIdx + 1}-${Math.min(startIdx + PAGE_SIZE, total)} dari ${total} data`;
+      document.getElementById('pagination-page-label').innerText = `Hal ${currentPage} / ${totalPages}`;
+      document.getElementById('btn-prev-page').disabled = currentPage <= 1;
+      document.getElementById('btn-next-page').disabled = currentPage >= totalPages;
+    }
+
+    function gotoPage(p) {
+      const totalPages = Math.max(1, Math.ceil(filteredData.length / PAGE_SIZE));
+      if (p < 1 || p > totalPages) return;
+      currentPage = p;
+      renderPage();
+    }
+
+    // Simpan perubahan RTL ke array data (bukan langsung ke server) supaya tidak hilang
+    // saat pindah halaman/paginasi, dan supaya kita tahu baris mana saja yang "dirty".
+    function onRtlChange(selectEl) {
+      const tr = selectEl.closest('tr');
+      const rowIdx = parseInt(tr.dataset.rowidx, 10);
+      const item = currentData.find(d => d.rowIdx === rowIdx);
+      if (item) { item.rtl = selectEl.value; item._dirty = true; }
+      if (selectEl.value !== '') tr.classList.add('row-filled'); else tr.classList.remove('row-filled');
+      tr.classList.remove('row-error');
+      const alasanInput = tr.querySelector('.inp-alasan');
+      if (alasanInput) alasanInput.classList.remove('field-error');
+    }
+
+    function onAlasanChange(inputEl) {
+      const tr = inputEl.closest('tr');
+      const rowIdx = parseInt(tr.dataset.rowidx, 10);
+      const item = currentData.find(d => d.rowIdx === rowIdx);
+      if (item) { item.alasan = inputEl.value; item._dirty = true; }
+      tr.classList.remove('row-error');
+      inputEl.classList.remove('field-error');
+    }
+
+    function simpanPerubahan() {
+      // Validasi wajib: setiap baris yang RTL-nya sudah dipilih (Dipertahankan ATAU
+      // Dinonaktifkan) harus disertai alasan. Ini karena mayoritas rekomendasi sistem
+      // adalah "Dinonaktifkan" - jadi keputusan apapun (termasuk mempertahankan) perlu
+      // justifikasi tertulis dari penginput.
+      const invalid = currentData.filter(d =>
+        d.rtl && d.rtl.trim() !== '' && (!d.alasan || d.alasan.trim() === '')
+      );
+
+      if (invalid.length > 0) {
+        showToast(`Ada ${invalid.length} baris yang sudah memilih RTL tapi alasan belum diisi. Alasan wajib diisi sebelum menyimpan.`, 'error');
+        let firstErrorTr = null;
+        invalid.forEach(item => {
+          const tr = document.querySelector(`tr[data-rowidx="${item.rowIdx}"]`);
+          if (tr) {
+            tr.classList.add('row-error');
+            const alasanInput = tr.querySelector('.inp-alasan');
+            if (alasanInput) alasanInput.classList.add('field-error');
+            if (!firstErrorTr) firstErrorTr = tr;
+          }
+        });
+        // Kalau baris bermasalah pertama ada di halaman lain, pindahkan ke halaman itu supaya terlihat
+        if (!firstErrorTr && invalid.length > 0) {
+          const idxInFiltered = filteredData.findIndex(d => d.rowIdx === invalid[0].rowIdx);
+          if (idxInFiltered >= 0) {
+            gotoPage(Math.floor(idxInFiltered / PAGE_SIZE) + 1);
+          }
+        } else if (firstErrorTr) {
+          firstErrorTr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+
+      // Hanya kirim baris yang benar-benar diubah user di sesi ini (bukan semua baris
+      // di tab). Ini mencegah kasus: Dinas OPD membuka tab yang sama, lalu klik Simpan
+      // tanpa mengubah baris milik PKB tertentu - baris PKB itu tidak ikut dikirim ulang,
+      // sehingga tidak menimpa input PKB yang mungkin baru saja disimpan di sesi lain.
+      const dirtyItems = currentData.filter(d => d._dirty);
+      if (dirtyItems.length === 0) {
+        showToast('Tidak ada perubahan untuk disimpan.', 'success');
+        return;
+      }
+
+      let updates = dirtyItems.map(d => ({
+        rowIdx: d.rowIdx, rtl: d.rtl, alasan: d.alasan,
+        idPoktan: d.idPoktan, namaPoktan: d.namaPoktan, kecamatan: d.kecamatan
+      }));
+      let payload = { kolomRTL: currentMeta.rtl, kolomAlasan: currentMeta.alasan, updates: updates };
+
+      eksekusiSimpan(payload, dirtyItems, 1);
+    }
+
+    const MAKS_PERCOBAAN_SIMPAN = 2; // percobaan pertama + 1 kali coba ulang otomatis
+
+    function eksekusiSimpan(payload, dirtyItems, percobaanKe) {
+      const btn = document.getElementById('btn-simpan');
+      btn.disabled = true;
+      btn.innerHTML = percobaanKe === 1
+        ? '<i class="fas fa-spinner fa-spin"></i> Menyimpan...'
+        : '<i class="fas fa-spinner fa-spin"></i> Mencoba lagi...';
+
+      google.script.run.withSuccessHandler(msg => {
+        showToast(msg, 'success');
+        dirtyItems.forEach(d => d._dirty = false);
+        btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Simpan Perubahan';
+        muatProgresWilayah(); // angka baru saja berubah, segarkan KPI wilayah
+      }).withFailureHandler(err => {
+        // Kalau ini soal sistem lagi sibuk (bukan bug/data salah), coba ulang otomatis
+        // sekali dengan jeda singkat sebelum minta user klik "Coba Lagi" manual.
+        if (percobaanKe < MAKS_PERCOBAAN_SIMPAN && isTransientError(err)) {
+          showToast('Sistem sedang sibuk, mencoba lagi otomatis...', 'error');
+          setTimeout(() => eksekusiSimpan(payload, dirtyItems, percobaanKe + 1), 3000);
+        } else {
+          showToast(friendlyError(err), 'error');
+          btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Coba Lagi';
+        }
+      }).simpanFeedbackPoktan(activeAuth, currentTab, payload);
+    }
+    
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      
+      const icon = type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-triangle"></i>';
+      toast.innerHTML = icon + ' <span>' + escapeHtml(message) + '</span>';
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 4300);
+    }
+  </script>
+</body>
+</html>

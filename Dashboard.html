@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html data-theme="light">
+<head>
+  <base target="_top">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root[data-theme="light"] {
+      --bg: #F8FAFC; --card: #FFFFFF; --text: #1E293B; --text-muted: #64748B;
+      --border: #E2E8F0; --primary: #0F172A; --accent: #2563EB;
+      --success: #059669; --danger: #DC2626; --warning: #D97706;
+      --th-bg: #F1F5F9; --hover-bg: #F8FAFC;
+    }
+    :root[data-theme="dark"] {
+      --bg: #0F172A; --card: #1E293B; --text: #F8FAFC; --text-muted: #94A3B8;
+      --border: #334155; --primary: #F8FAFC; --accent: #3B82F6;
+      --success: #10B981; --danger: #EF4444; --warning: #F59E0B;
+      --th-bg: #0F172A; --hover-bg: #334155;
+    }
+
+    body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); padding: 20px; max-width: 1200px; margin: auto; transition: background-color 0.3s ease, color 0.3s ease; }
+
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+    .title-area h2 { margin: 0; color: var(--primary); font-size: 22px; font-weight: 600; }
+    .title-area p { margin: 2px 0 0 0; font-size: 13px; color: var(--text-muted); }
+
+    .action-area { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .timestamp-label { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+    .btn { padding: 10px 18px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; background: var(--card); color: var(--text); transition: 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn:hover { background: var(--hover-bg); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover { background: #1D4ED8; color: #fff; }
+
+    .theme-toggle { background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+    .theme-toggle:hover { background: var(--hover-bg); }
+
+    .card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px; }
+
+    .filter-grid { display: flex; gap: 15px; flex-wrap: wrap; }
+    .filter-item { flex: 1; min-width: 200px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+    select, input[type="text"], input[type="password"] { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-family: inherit; font-size: 14px; outline: none; box-sizing: border-box; }
+    select:focus, input:focus { border-color: var(--accent); }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+    .kpi-card { text-align: center; padding: 16px; }
+    .kpi-val { font-size: 28px; font-weight: 700; color: var(--accent); }
+    .kpi-val.success { color: var(--success); }
+    .kpi-val.warning { color: var(--warning); }
+    .kpi-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
+    .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+    .progress-track { width: 100%; height: 6px; background: var(--border); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; background: var(--accent); border-radius: 3px; transition: width 0.4s ease; }
+
+    .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+    .search-box { max-width: 240px; }
+
+    .table-container { overflow-x: auto; max-height: 400px; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid var(--border); padding: 12px; text-align: left; }
+    th { background: var(--th-bg); position: sticky; top: 0; font-weight: 600; color: var(--text-muted); z-index: 2; box-shadow: 0 1px 0 var(--border); }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { color: var(--text); }
+    th.sortable i { margin-left: 4px; font-size: 11px; opacity: 0.7; }
+    tr:hover { background: var(--hover-bg); }
+
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; display: inline-block; }
+    .bg-green { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+    .bg-red { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+    /* Kartu grafik */
+    .charts-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+    .chart-card { flex: 1; min-width: 260px; margin-bottom: 0; }
+    .chart-card.wide { flex: 1.4; }
+    .chart-title { margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: var(--text); }
+    .chart-wrap { position: relative; height: 220px; }
+    .chart-wrap.short { height: 180px; }
+
+    #loading { text-align: center; padding: 60px 20px; font-weight: 500; color: var(--text-muted); font-size: 14px; background: var(--card); border-radius: 12px; border: 1px solid var(--border); }
+    #loading i { color: var(--accent); font-size: 24px; display: block; margin-bottom: 12px; }
+    #main-content { display: none; }
+
+    /* Tab halaman (Dasbor Wilayah / Progres Coach & Mentor) */
+    .page-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .page-tab { padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text-muted); font-weight: 600; cursor: pointer; font-size: 13px; font-family: inherit; transition: 0.2s; }
+    .page-tab:hover { background: var(--hover-bg); color: var(--text); }
+    .page-tab.active { background: var(--primary); color: var(--bg); border-color: var(--primary); }
+
+    /* Gerbang passcode tab Coach & Mentor */
+    .gate-card { max-width: 380px; margin: 30px auto; text-align: center; }
+    .gate-card i.fa-lock { font-size: 26px; color: var(--accent); margin-bottom: 10px; display: block; }
+    .gate-card h3 { margin: 0 0 6px 0; font-size: 16px; }
+    .gate-card p { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+    .gate-error { color: var(--danger); font-size: 12px; margin-top: 10px; min-height: 14px; }
+
+    /* Toast Notification */
+    #toast-container { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; max-width: 320px; }
+    .toast { min-width: 220px; padding: 14px 20px; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: flex-start; gap: 10px; opacity: 0; transform: translateX(100%); animation: slideIn 0.3s forwards, fadeOut 0.3s forwards 3.5s; }
+    .toast.success { background-color: var(--success); }
+    .toast.error { background-color: #EF4444; }
+    @keyframes slideIn { to { opacity: 1; transform: translateX(0); } }
+    @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="title-area">
+      <h2>Pemantauan Tabel Rekapan Poktan</h2>
+      <p>Analisis Berjenjang Wilayah dan Sektor</p>
+    </div>
+    <div class="action-area">
+      <span class="timestamp-label" id="data-timestamp"></span>
+      <button class="btn" onclick="refreshDashboard()" id="btn-refresh" title="Muat ulang data terbaru dari sheet">
+        <i class="fas fa-rotate" id="refresh-icon"></i> Segarkan Data
+      </button>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Ubah Tema"><i class="fas fa-moon" id="theme-icon"></i></button>
+      <a href="<?= scriptUrl ?>?page=input" target="_top" class="btn btn-primary"><i class="fas fa-lock"></i> Panel Input</a>
+    </div>
+  </div>
+
+  <div id="loading">
+    <i class="fas fa-spinner fa-spin"></i> Memuat data tabel rekapitulasi, mohon tunggu...
+  </div>
+
+  <div id="main-content">
+
+    <div class="page-tabs">
+      <button class="page-tab active" id="tab-btn-wilayah" onclick="switchPageTab('wilayah')">Dasbor Wilayah</button>
+      <button class="page-tab" id="tab-btn-coach" onclick="switchPageTab('coach')">Progres Coach &amp; Mentor</button>
+    </div>
+
+    <!-- ==================== TAB 1: DASBOR WILAYAH (publik, tanpa passcode) ==================== -->
+    <div id="panel-wilayah">
+      <div class="card filter-grid">
+        <div class="filter-item">
+          <label>Filter Kabupaten</label>
+          <select id="flt-kab" onchange="onKabupatenChange()">
+            <option value="SEMUA">Semua Kabupaten (Provinsi NTT)</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Filter Kecamatan</label>
+          <select id="flt-kec" onchange="renderDashboard()">
+            <option value="SEMUA">Semua Kecamatan</option>
+          </select>
+        </div>
+        <div class="filter-item">
+          <label>Filter Jenis Poktan</label>
+          <select id="flt-jenis" onchange="renderDashboard()">
+            <option value="SEMUA">Semua Jenis</option>
+            <option value="BKB">BKB</option>
+            <option value="BKR">BKR</option>
+            <option value="BKL">BKL</option>
+            <option value="UPPKA">UPPKA</option>
+            <option value="PIKR">PIK-R</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="kpi-grid card">
+        <div class="kpi-card">
+          <div class="kpi-val" id="kpi-target">0</div>
+          <div class="kpi-label">Total Target Kelompok</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-val success" id="kpi-capaian">0</div>
+          <div class="kpi-label">Sudah Dikonfirmasi</div>
+          <div class="kpi-sub" id="kpi-capaian-detail">0 Dipertahankan · 0 Dinonaktifkan</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-val" id="kpi-persen" style="color: var(--text);">0%</div>
+          <div class="kpi-label">Progres Penyelesaian</div>
+          <div class="progress-track"><div class="progress-fill" id="kpi-progress-fill"></div></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-val warning" id="kpi-beda-rekom">0</div>
+          <div class="kpi-label">Dipertahankan Beda Rekomendasi</div>
+          <div class="kpi-sub">Sistem rekomendasi "Dinonaktifkan", tapi diputuskan "Dipertahankan"</div>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="card chart-card">
+          <h4 class="chart-title">Komposisi Keputusan</h4>
+          <div class="chart-wrap"><canvas id="chart-komposisi"></canvas></div>
+        </div>
+        <div class="card chart-card wide">
+          <h4 class="chart-title" id="title-tertinggal">5 Wilayah Paling Tertinggal</h4>
+          <div class="chart-wrap"><canvas id="chart-tertinggal"></canvas></div>
+        </div>
+      </div>
+
+      <!-- 1. TABEL REKAPAN WILAYAH (Kabupaten / Kecamatan / Desa) -->
+      <div class="card">
+        <div class="table-header-row">
+          <h3 style="margin:0; font-size: 16px;" id="lbl-tabel-wilayah">Rekapan per Wilayah</h3>
+          <input type="text" class="search-box" id="cari-wilayah" oninput="renderDashboard()" placeholder="Cari nama wilayah...">
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable" onclick="toggleSort('label')"><span id="th-wilayah-label">Wilayah</span> <i class="fas fa-sort" id="sort-icon-label"></i></th>
+                <th class="sortable" onclick="toggleSort('target')">Target <i class="fas fa-sort" id="sort-icon-target"></i></th>
+                <th class="sortable" onclick="toggleSort('selesai')">Selesai <i class="fas fa-sort" id="sort-icon-selesai"></i></th>
+                <th class="sortable" onclick="toggleSort('pct')">Progres <i class="fas fa-sort" id="sort-icon-pct"></i></th>
+              </tr>
+            </thead>
+            <tbody id="tbl-rekap-wilayah"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 2. TABEL REKAPAN PER JENIS POKTAN (BKB, BKR, BKL, UPPKA, PIKR) -->
+      <div class="card">
+        <h3 style="margin-top:0; font-size: 16px; margin-bottom: 15px;">Rekapan per Jenis Kelompok (Sektor)</h3>
+        <div class="chart-wrap short" style="margin-bottom: 16px;"><canvas id="chart-sektor"></canvas></div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Jenis Poktan</th>
+                <th>Target</th>
+                <th>Selesai</th>
+                <th>Progres</th>
+              </tr>
+            </thead>
+            <tbody id="tbl-rekap-sektor"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 2: PROGRES COACH & MENTOR (bergerbang passcode) ==================== -->
+    <div id="panel-coach" style="display:none;">
+
+      <div class="card gate-card" id="coach-gate">
+        <i class="fas fa-lock"></i>
+        <h3>Akses Khusus Coach &amp; Mentor</h3>
+        <p>Masukkan passcode untuk melihat progres wilayah binaan.</p>
+        <input type="password" id="inp-coach-passcode" placeholder="Passcode" style="margin-bottom:10px;" onkeydown="if(event.key==='Enter'){bukaCoachMentor();}">
+        <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="bukaCoachMentor()" id="btn-buka-coach">Masuk</button>
+        <p class="gate-error" id="msg-coach-passcode"></p>
+      </div>
+
+      <div id="coach-content" style="display:none;">
+        <div class="card filter-grid">
+          <div class="filter-item">
+            <label>Filter Mentor</label>
+            <select id="flt-mentor" onchange="onMentorChangeCoach()">
+              <option value="SEMUA">Semua Mentor</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>Filter Coach</label>
+            <select id="flt-coach" onchange="onCoachChangeCoach()">
+              <option value="SEMUA">Semua Coach</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>Filter Kecamatan</label>
+            <select id="flt-kec-coach" onchange="renderCoachDashboard()">
+              <option value="SEMUA">Semua Kecamatan</option>
+            </select>
+          </div>
+        </div>
+
+        <h3 id="lbl-progres-wilayah-anda" style="font-size: 15px; margin: 0 0 10px 4px; color: var(--text-muted);">Progres Wilayah Anda</h3>
+        <div class="kpi-grid card">
+          <div class="kpi-card">
+            <div class="kpi-val" id="kpi-coach-target">0</div>
+            <div class="kpi-label">Total Target Kelompok</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val success" id="kpi-coach-capaian">0</div>
+            <div class="kpi-label">Sudah Dikonfirmasi</div>
+            <div class="kpi-sub" id="kpi-coach-capaian-detail">0 Dipertahankan · 0 Dinonaktifkan</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" id="kpi-coach-persen" style="color: var(--text);">0%</div>
+            <div class="kpi-label">Progres Penyelesaian</div>
+            <div class="progress-track"><div class="progress-fill" id="kpi-coach-progress-fill"></div></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val warning" id="kpi-coach-beda-rekom">0</div>
+            <div class="kpi-label">Dipertahankan Beda Rekomendasi</div>
+            <div class="kpi-sub">Sistem rekomendasi "Dinonaktifkan", tapi diputuskan "Dipertahankan"</div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="card chart-card">
+            <h4 class="chart-title">Komposisi Keputusan</h4>
+            <div class="chart-wrap"><canvas id="chart-coach-komposisi"></canvas></div>
+          </div>
+          <div class="card chart-card wide">
+            <h4 class="chart-title" id="title-coach-tertinggal">5 Wilayah Paling Tertinggal</h4>
+            <div class="chart-wrap"><canvas id="chart-coach-tertinggal"></canvas></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-header-row">
+            <h3 style="margin:0; font-size: 16px;" id="lbl-tabel-coach">Rekapan per Mentor</h3>
+            <input type="text" class="search-box" id="cari-wilayah-coach" oninput="renderCoachDashboard()" placeholder="Cari nama wilayah...">
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th class="sortable" onclick="toggleSortCoach('label')"><span id="th-coach-label">Mentor</span> <i class="fas fa-sort" id="sort-icon-coach-label"></i></th>
+                  <th class="sortable" onclick="toggleSortCoach('target')">Target <i class="fas fa-sort" id="sort-icon-coach-target"></i></th>
+                  <th class="sortable" onclick="toggleSortCoach('selesai')">Selesai <i class="fas fa-sort" id="sort-icon-coach-selesai"></i></th>
+                  <th class="sortable" onclick="toggleSortCoach('pct')">Progres <i class="fas fa-sort" id="sort-icon-coach-pct"></i></th>
+                </tr>
+              </thead>
+              <tbody id="tbl-rekap-coach"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script>
+    let rawData = [];
+    let lastGeneratedAt = null;
+
+    // Default: urutkan dari progres TERENDAH dulu, supaya wilayah paling tertinggal
+    // langsung terlihat di atas tanpa perlu di-scroll. Dua tab, dua state terpisah.
+    let sortState = { key: 'pct', dir: 'asc' };
+    let sortStateCoach = { key: 'pct', dir: 'asc' };
+
+    // State tab "Progres Coach & Mentor"
+    let coachUnlocked = false;      // sudah masuk passcode dengan benar di sesi ini?
+    let coachAssignments = [];      // [{kabupaten, kecamatan, mentor, coach}, ...] dari dataCoach
+    let coachMentors = [];          // daftar nama mentor unik
+    let coachCoaches = [];          // daftar nama coach unik
+    let coachJoinMap = {};          // "KAB|KEC" -> {mentor, coach}, untuk join ke rawData
+
+    // Escape data sebelum masuk ke innerHTML (jaga-jaga, konsisten dengan Index.html)
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return String(str).replace(/[&<>"']/g, ch => map[ch]);
+    }
+
+    // Ubah error teknis mentah jadi pesan rapi untuk ditampilkan ke pengguna
+    function friendlyError(err) {
+      const raw = (err && err.message) ? err.message : String(err);
+      console.error('Detail error:', err);
+
+      const sibuk = /(too many|concurrent|exceeded maximum execution|rate limit|quota|service invoked too many times|internal error|server error)/i;
+      if (sibuk.test(raw)) {
+        return 'Sistem sedang banyak diakses bersamaan. Coba lagi dalam beberapa detik.';
+      }
+
+      const teknis = /(TypeError|ReferenceError|Cannot read|undefined is not|Exception:|Script function not found|is not a function|null is not an object)/i;
+      if (teknis.test(raw)) {
+        return 'Terjadi kendala teknis saat memuat data. Coba muat ulang halaman, atau hubungi admin jika masalah berlanjut.';
+      }
+      return raw;
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      const icon = type === 'success' ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-exclamation-triangle"></i>';
+      toast.innerHTML = icon + ' <span>' + escapeHtml(message) + '</span>';
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3800);
+    }
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem('poktanTheme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      document.getElementById('theme-icon').className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('poktanTheme', next);
+      document.getElementById('theme-icon').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+
+      // Grafik membaca warna dari CSS variable saat digambar, jadi perlu digambar ulang
+      // supaya warnanya ikut berubah instan saat ganti tema (bukan cuma kartu di sekitarnya).
+      if (document.getElementById('main-content').style.display !== 'none') {
+        renderDashboard();
+        if (coachUnlocked) renderCoachDashboard();
+      }
+    }
+    initTheme();
+
+    function updateTimestampLabel() {
+      const el = document.getElementById('data-timestamp');
+      if (!lastGeneratedAt) { el.innerText = ''; return; }
+      try {
+        const d = new Date(lastGeneratedAt);
+        const opts = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+        el.innerText = 'Data per: ' + d.toLocaleString('id-ID', opts);
+      } catch (e) {
+        el.innerText = '';
+      }
+    }
+
+    // Ambil data dari server GAS (pakai cache di server, lihat Code.gs)
+    google.script.run.withSuccessHandler(res => {
+      rawData = res.data;
+      lastGeneratedAt = res.generatedAt;
+      updateTimestampLabel();
+      populateKabupaten();
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('main-content').style.display = 'block';
+    }).withFailureHandler(err => {
+      document.getElementById('loading').innerHTML = `<i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i> Gagal memuat: ${escapeHtml(friendlyError(err))}`;
+    }).getRekapDashboardPublik();
+
+    // Tombol "Segarkan Data": minta data terbaru langsung dari sheet (lewati cache server).
+    // Pilihan filter yang sedang aktif di tab manapun TIDAK diubah - cukup data & tabelnya
+    // yang diperbarui di tempat. Kalau tab Coach & Mentor sudah terbuka, ikut disegarkan juga.
+    function refreshDashboard() {
+      const btn = document.getElementById('btn-refresh');
+      const icon = document.getElementById('refresh-icon');
+      btn.disabled = true;
+      icon.classList.add('fa-spin');
+
+      google.script.run.withSuccessHandler(res => {
+        rawData = res.data;
+        lastGeneratedAt = res.generatedAt;
+        updateTimestampLabel();
+        renderDashboard();
+        if (coachUnlocked) renderCoachDashboard();
+        showToast('Data berhasil diperbarui.', 'success');
+        btn.disabled = false;
+        icon.classList.remove('fa-spin');
+      }).withFailureHandler(err => {
+        showToast(friendlyError(err), 'error');
+        btn.disabled = false;
+        icon.classList.remove('fa-spin');
+      }).getRekapDashboardPublik(true);
+    }
+
+    // --- NAVIGASI TAB HALAMAN ---
+    function switchPageTab(tab) {
+      document.getElementById('tab-btn-wilayah').classList.toggle('active', tab === 'wilayah');
+      document.getElementById('tab-btn-coach').classList.toggle('active', tab === 'coach');
+      document.getElementById('panel-wilayah').style.display = tab === 'wilayah' ? 'block' : 'none';
+      document.getElementById('panel-coach').style.display = tab === 'coach' ? 'block' : 'none';
+
+      if (tab === 'coach') {
+        // Kalau sudah pernah masuk passcode dengan benar di sesi ini, langsung tampilkan
+        // isinya tanpa minta passcode lagi.
+        document.getElementById('coach-gate').style.display = coachUnlocked ? 'none' : 'block';
+        document.getElementById('coach-content').style.display = coachUnlocked ? 'block' : 'none';
+      }
+    }
+
+    // --- UTIL BERSAMA: agregasi wilayah, KPI, render tabel (dipakai kedua tab) ---
+
+    function hitungKpiWilayah(data) {
+      const totalTarget = data.length;
+      let totalDipertahankan = 0, totalDinonaktifkan = 0, totalBedaRekom = 0;
+      data.forEach(d => {
+        if (d.putusan === 'Dipertahankan') totalDipertahankan++;
+        else if (d.putusan === 'Dinonaktifkan') totalDinonaktifkan++;
+        // Sistem merekomendasikan "Dinonaktifkan" tapi penginput memutuskan "Dipertahankan" -
+        // keputusan yang berbeda dari rekomendasi sistem, perlu dikawal (lihat aturan
+        // wajib-alasan di Panel Input).
+        if (d.rekomendasi === 'Dinonaktifkan' && d.putusan === 'Dipertahankan') totalBedaRekom++;
+      });
+      const totalSelesai = totalDipertahankan + totalDinonaktifkan;
+      const pctSelesai = totalTarget ? Math.round((totalSelesai / totalTarget) * 100) : 0;
+      return { totalTarget, totalDipertahankan, totalDinonaktifkan, totalSelesai, pctSelesai, totalBedaRekom };
+    }
+
+    function terapkanKpiKeDom(kpi, prefix) {
+      document.getElementById(prefix + 'target').innerText = kpi.totalTarget;
+      document.getElementById(prefix + 'capaian').innerText = kpi.totalSelesai;
+      document.getElementById(prefix + 'capaian-detail').innerText = `${kpi.totalDipertahankan} Dipertahankan · ${kpi.totalDinonaktifkan} Dinonaktifkan`;
+      document.getElementById(prefix + 'persen').innerText = kpi.pctSelesai + '%';
+      document.getElementById(prefix + 'progress-fill').style.width = kpi.pctSelesai + '%';
+      document.getElementById(prefix + 'beda-rekom').innerText = kpi.totalBedaRekom;
+    }
+
+    function hitungRekapWilayah(data, groupKey, searchTerm, state) {
+      const mapRekap = {};
+      data.forEach(d => {
+        let key = d[groupKey];
+        if (!key || key === '' || key === 'UNDEFINED') key = 'LAINNYA';
+        if (!mapRekap[key]) mapRekap[key] = { target: 0, selesai: 0 };
+        mapRekap[key].target++;
+        if (d.putusan && d.putusan !== 'Belum Input') mapRekap[key].selesai++;
+      });
+
+      let rows = Object.keys(mapRekap).map(k => {
+        const v = mapRekap[k];
+        const pct = v.target === 0 ? 0 : Math.round((v.selesai / v.target) * 100);
+        return { label: k, target: v.target, selesai: v.selesai, pct: pct };
+      });
+
+      if (searchTerm) rows = rows.filter(r => r.label.toLowerCase().includes(searchTerm));
+
+      rows.sort((a, b) => {
+        let av = a[state.key], bv = b[state.key];
+        if (typeof av === 'string') { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+        if (av < bv) return state.dir === 'asc' ? -1 : 1;
+        if (av > bv) return state.dir === 'asc' ? 1 : -1;
+        return 0;
+      });
+
+      return rows;
+    }
+
+    function renderRowsToTable(rows, tbodyId) {
+      let html = '';
+      rows.forEach(r => {
+        let capaianKls = r.pct === 100 ? 'badge bg-green' : (r.pct < 50 ? 'badge bg-red' : 'badge');
+        html += `
+          <tr>
+            <td><strong>${escapeHtml(r.label)}</strong></td>
+            <td>${r.target}</td>
+            <td>${r.selesai}</td>
+            <td><span class="${capaianKls}">${r.pct}%</span></td>
+          </tr>
+        `;
+      });
+      document.getElementById(tbodyId).innerHTML = html || '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">Tidak ada data yang tersedia.</td></tr>';
+    }
+
+    function updateSortIcons(prefix, state) {
+      ['label', 'target', 'selesai', 'pct'].forEach(k => {
+        const el = document.getElementById('sort-icon-' + prefix + k);
+        if (!el) return;
+        el.className = state.key === k
+          ? (state.dir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down')
+          : 'fas fa-sort';
+      });
+    }
+
+    function toggleSortGeneric(state, key, rerenderFn) {
+      if (state.key === key) {
+        state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.key = key;
+        state.dir = 'asc';
+      }
+      rerenderFn();
+    }
+
+    // --- UTIL GRAFIK BERSAMA (dipakai kedua tab) ---
+    // Warna dibaca dari CSS variable saat digambar (bukan di-hardcode), supaya otomatis
+    // ikut berubah saat ganti tema terang/gelap - lihat toggleTheme() yang menggambar
+    // ulang grafik setelah ganti tema.
+    let chartInstances = {};
+
+    function cssVar(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function renderOrUpdateChart(canvasId, config) {
+      const el = document.getElementById(canvasId);
+      if (!el) return;
+      if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+      chartInstances[canvasId] = new Chart(el, config);
+    }
+
+    function renderChartKomposisi(canvasId, kpi) {
+      const belumInput = kpi.totalTarget - kpi.totalSelesai;
+      renderOrUpdateChart(canvasId, {
+        type: 'doughnut',
+        data: {
+          labels: ['Dipertahankan', 'Dinonaktifkan', 'Belum Input'],
+          datasets: [{
+            data: [kpi.totalDipertahankan, kpi.totalDinonaktifkan, belumInput],
+            backgroundColor: [cssVar('--success'), cssVar('--danger'), cssVar('--border')],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '62%',
+          plugins: {
+            legend: { position: 'bottom', labels: { color: cssVar('--text'), font: { family: 'Poppins', size: 11 }, boxWidth: 10, padding: 10 } }
+          }
+        }
+      });
+    }
+
+    // rows: [{label, target, selesai, pct}, ...] - dipakai untuk grafik "N Wilayah Paling
+    // Tertinggal" maupun "Progres per Sektor" (bentuknya sama, cuma warna beda).
+    function renderChartBarPersen(canvasId, rows, warna) {
+      renderOrUpdateChart(canvasId, {
+        type: 'bar',
+        data: {
+          labels: rows.map(r => r.label),
+          datasets: [{ data: rows.map(r => r.pct), backgroundColor: warna, borderRadius: 4, maxBarThickness: 22 }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { min: 0, max: 100, ticks: { color: cssVar('--text-muted'), callback: v => v + '%' }, grid: { color: cssVar('--border') } },
+            y: { ticks: { color: cssVar('--text'), font: { family: 'Poppins', size: 11 } }, grid: { display: false } }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ctx.parsed.x + '% selesai' } }
+          }
+        }
+      });
+    }
+
+    // ==================== TAB 1: DASBOR WILAYAH ====================
+
+    function populateKabupaten() {
+      const kabSet = new Set(rawData.map(d => d.kabupaten).filter(Boolean));
+      const el = document.getElementById('flt-kab');
+      let opt = '<option value="SEMUA">Semua Kabupaten (Provinsi NTT)</option>';
+      Array.from(kabSet).sort().forEach(k => opt += `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`);
+      el.innerHTML = opt;
+      renderDashboard();
+    }
+
+    function onKabupatenChange() {
+      const kab = document.getElementById('flt-kab');
+      const kec = document.getElementById('flt-kec');
+      kec.innerHTML = '<option value="SEMUA">Semua Kecamatan</option>';
+
+      if (kab.value !== 'SEMUA') {
+        const kecSet = new Set(
+          rawData
+            .filter(d => d.kabupaten === kab.value && d.kecamatan)
+            .map(d => d.kecamatan)
+        );
+        Array.from(kecSet).sort().forEach(k => kec.innerHTML += `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`);
+      }
+      renderDashboard();
+    }
+
+    function toggleSort(key) {
+      toggleSortGeneric(sortState, key, renderDashboard);
+    }
+
+    function renderDashboard() {
+      const kabVal = document.getElementById('flt-kab').value;
+      const kecVal = document.getElementById('flt-kec').value;
+      const jenisVal = document.getElementById('flt-jenis').value;
+
+      let filtered = rawData;
+      if (kabVal !== 'SEMUA') filtered = filtered.filter(d => d.kabupaten === kabVal);
+      if (kecVal !== 'SEMUA') filtered = filtered.filter(d => d.kecamatan === kecVal);
+      if (jenisVal !== 'SEMUA') filtered = filtered.filter(d => d.jenisPoktan === jenisVal);
+
+      const kpiWilayah = hitungKpiWilayah(filtered);
+      terapkanKpiKeDom(kpiWilayah, 'kpi-');
+      renderChartKomposisi('chart-komposisi', kpiWilayah);
+
+      let groupKey, labelHeader;
+      if (kabVal === 'SEMUA') {
+        groupKey = 'kabupaten'; labelHeader = 'Kabupaten';
+        document.getElementById('lbl-tabel-wilayah').innerText = 'Rekapan per Kabupaten (Provinsi NTT)';
+      } else if (kecVal === 'SEMUA') {
+        groupKey = 'kecamatan'; labelHeader = 'Kecamatan';
+        document.getElementById('lbl-tabel-wilayah').innerText = `Rekapan per Kecamatan di Kabupaten ${kabVal}`;
+      } else {
+        groupKey = 'desa'; labelHeader = 'Desa';
+        document.getElementById('lbl-tabel-wilayah').innerText = `Rekapan per Desa di Kecamatan ${kecVal}`;
+      }
+      document.getElementById('th-wilayah-label').innerText = labelHeader;
+
+      const cari = (document.getElementById('cari-wilayah').value || '').trim().toLowerCase();
+      const rows = hitungRekapWilayah(filtered, groupKey, cari, sortState);
+      updateSortIcons('', sortState);
+      renderRowsToTable(rows, 'tbl-rekap-wilayah');
+
+      // "N Wilayah Paling Tertinggal" SELALU urut dari progres terendah, tidak ikut
+      // sortState tabel (yang bisa diubah user) dan tidak ikut kotak pencarian - ini
+      // sorotan tetap, bukan bagian dari tabel yang bisa difilter.
+      const top5 = hitungRekapWilayah(filtered, groupKey, '', { key: 'pct', dir: 'asc' }).slice(0, 5);
+      document.getElementById('title-tertinggal').innerText = `${top5.length} Wilayah Paling Tertinggal`;
+      renderChartBarPersen('chart-tertinggal', top5, cssVar('--danger'));
+
+      renderTabelSektor(filtered);
+    }
+
+    function renderTabelSektor(data) {
+      const urutanSektor = ['BKB', 'BKR', 'BKL', 'UPPKA', 'PIKR'];
+      const mapSektor = {};
+      urutanSektor.forEach(s => { mapSektor[s] = { target: 0, selesai: 0 }; });
+
+      data.forEach(d => {
+        let sektor = d.jenisPoktan;
+        if (!mapSektor[sektor]) mapSektor[sektor] = { target: 0, selesai: 0 };
+        mapSektor[sektor].target++;
+        if (d.putusan && d.putusan !== 'Belum Input') mapSektor[sektor].selesai++;
+      });
+
+      const rows = Object.keys(mapSektor)
+        .sort((a, b) => urutanSektor.indexOf(a) - urutanSektor.indexOf(b))
+        .map(s => {
+          const v = mapSektor[s];
+          const pct = v.target === 0 ? 0 : Math.round((v.selesai / v.target) * 100);
+          return { label: s, target: v.target, selesai: v.selesai, pct: pct };
+        })
+        .filter(r => r.target > 0);
+
+      renderRowsToTable(rows, 'tbl-rekap-sektor');
+      renderChartBarPersen('chart-sektor', rows, cssVar('--accent'));
+    }
+
+    // ==================== TAB 2: PROGRES COACH & MENTOR ====================
+
+    function bukaCoachMentor() {
+      const passcode = document.getElementById('inp-coach-passcode').value;
+      const msg = document.getElementById('msg-coach-passcode');
+      const btn = document.getElementById('btn-buka-coach');
+      msg.innerText = '';
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memeriksa...';
+
+      google.script.run.withSuccessHandler(res => {
+        coachAssignments = res.assignments;
+        coachMentors = res.mentors;
+        coachCoaches = res.coaches;
+        buildCoachJoinMap();
+        coachUnlocked = true;
+
+        document.getElementById('coach-gate').style.display = 'none';
+        document.getElementById('coach-content').style.display = 'block';
+        document.getElementById('inp-coach-passcode').value = '';
+        btn.disabled = false;
+        btn.innerHTML = 'Masuk';
+
+        populateMentorDropdown();
+      }).withFailureHandler(err => {
+        msg.innerText = friendlyError(err);
+        btn.disabled = false;
+        btn.innerHTML = 'Masuk';
+      }).getPetaCoachMentor(passcode);
+    }
+
+    function buildCoachJoinMap() {
+      coachJoinMap = {};
+      coachAssignments.forEach(a => {
+        coachJoinMap[a.kabupaten + '|' + a.kecamatan] = { mentor: a.mentor, coach: a.coach };
+      });
+    }
+
+    function populateMentorDropdown() {
+      const sel = document.getElementById('flt-mentor');
+      let opt = '<option value="SEMUA">Semua Mentor</option>';
+      coachMentors.forEach(m => opt += `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`);
+      sel.innerHTML = opt;
+      populateCoachDropdown();
+    }
+
+    function populateCoachDropdown() {
+      const mentorVal = document.getElementById('flt-mentor').value;
+      const sel = document.getElementById('flt-coach');
+      let relevantCoaches;
+      if (mentorVal === 'SEMUA') {
+        relevantCoaches = coachCoaches;
+      } else {
+        relevantCoaches = Array.from(new Set(
+          coachAssignments.filter(a => a.mentor === mentorVal).map(a => a.coach)
+        )).sort();
+      }
+      let opt = '<option value="SEMUA">Semua Coach</option>';
+      relevantCoaches.forEach(c => opt += `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`);
+      sel.innerHTML = opt;
+      populateKecamatanCoachDropdown();
+    }
+
+    function populateKecamatanCoachDropdown() {
+      const mentorVal = document.getElementById('flt-mentor').value;
+      const coachVal = document.getElementById('flt-coach').value;
+      const sel = document.getElementById('flt-kec-coach');
+      const relevant = coachAssignments.filter(a =>
+        (mentorVal === 'SEMUA' || a.mentor === mentorVal) &&
+        (coachVal === 'SEMUA' || a.coach === coachVal)
+      );
+      const kecSet = new Set(relevant.map(a => a.kecamatan));
+      let opt = '<option value="SEMUA">Semua Kecamatan</option>';
+      Array.from(kecSet).sort().forEach(k => opt += `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`);
+      sel.innerHTML = opt;
+    }
+
+    function onMentorChangeCoach() {
+      populateCoachDropdown();
+      renderCoachDashboard();
+    }
+
+    function onCoachChangeCoach() {
+      populateKecamatanCoachDropdown();
+      renderCoachDashboard();
+    }
+
+    function toggleSortCoach(key) {
+      toggleSortGeneric(sortStateCoach, key, renderCoachDashboard);
+    }
+
+    function renderCoachDashboard() {
+      const mentorVal = document.getElementById('flt-mentor').value;
+      const coachVal = document.getElementById('flt-coach').value;
+      const kecVal = document.getElementById('flt-kec-coach').value;
+
+      // Join rawData (data poktan, sudah dimuat publik) dengan peta mentor/coach lewat
+      // kunci Kabupaten|Kecamatan. Baris yang kecamatannya tidak terdaftar di dataCoach
+      // (data tidak sinkron) otomatis tidak ikut ditampilkan di tab ini.
+      const filtered = rawData.filter(d => {
+        const assign = coachJoinMap[d.kabupaten + '|' + d.kecamatan];
+        if (!assign) return false;
+        if (mentorVal !== 'SEMUA' && assign.mentor !== mentorVal) return false;
+        if (coachVal !== 'SEMUA' && assign.coach !== coachVal) return false;
+        if (kecVal !== 'SEMUA' && d.kecamatan !== kecVal) return false;
+        return true;
+      }).map(d => {
+        const assign = coachJoinMap[d.kabupaten + '|' + d.kecamatan];
+        return Object.assign({}, d, { mentor: assign.mentor, coach: assign.coach });
+      });
+
+      const kpiCoach = hitungKpiWilayah(filtered);
+      terapkanKpiKeDom(kpiCoach, 'kpi-coach-');
+      renderChartKomposisi('chart-coach-komposisi', kpiCoach);
+
+      // Judul KPI menyesuaikan filter paling spesifik yang aktif, biar jelas ini
+      // progres wilayah SIAPA yang sedang dilihat.
+      let labelProgres = 'Progres Wilayah Anda — Semua Mentor (Provinsi NTT)';
+      if (kecVal !== 'SEMUA') labelProgres = `Progres Wilayah Anda — Kecamatan ${kecVal}`;
+      else if (coachVal !== 'SEMUA') labelProgres = `Progres Wilayah Anda — Coach: ${coachVal}`;
+      else if (mentorVal !== 'SEMUA') labelProgres = `Progres Wilayah Anda — Mentor: ${mentorVal}`;
+      document.getElementById('lbl-progres-wilayah-anda').innerText = labelProgres;
+
+      let groupKey, labelHeader, judul;
+      // Cek dari yang PALING SPESIFIK dulu (Kecamatan), bukan dari Mentor - supaya tetap
+      // benar walau user langsung pilih Coach atau Kecamatan tanpa memilih Mentor lebih dulu.
+      if (kecVal !== 'SEMUA') {
+        groupKey = 'desa'; labelHeader = 'Desa';
+        judul = `Rekapan per Desa di Kecamatan ${kecVal}`;
+      } else if (coachVal !== 'SEMUA') {
+        groupKey = 'kecamatan'; labelHeader = 'Kecamatan';
+        judul = `Rekapan per Kecamatan (Coach: ${coachVal})`;
+      } else if (mentorVal !== 'SEMUA') {
+        groupKey = 'coach'; labelHeader = 'Coach';
+        judul = `Rekapan per Coach di bawah Mentor ${mentorVal}`;
+      } else {
+        groupKey = 'mentor'; labelHeader = 'Mentor';
+        judul = 'Rekapan per Mentor (Provinsi NTT)';
+      }
+      document.getElementById('lbl-tabel-coach').innerText = judul;
+      document.getElementById('th-coach-label').innerText = labelHeader;
+
+      const cari = (document.getElementById('cari-wilayah-coach').value || '').trim().toLowerCase();
+      const rows = hitungRekapWilayah(filtered, groupKey, cari, sortStateCoach);
+      updateSortIcons('coach-', sortStateCoach);
+      renderRowsToTable(rows, 'tbl-rekap-coach');
+
+      const top5Coach = hitungRekapWilayah(filtered, groupKey, '', { key: 'pct', dir: 'asc' }).slice(0, 5);
+      document.getElementById('title-coach-tertinggal').innerText = `${top5Coach.length} Wilayah Paling Tertinggal`;
+      renderChartBarPersen('chart-coach-tertinggal', top5Coach, cssVar('--danger'));
+    }
+  </script>
+</body>
+</html>
